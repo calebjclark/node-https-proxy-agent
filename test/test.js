@@ -288,7 +288,9 @@ describe('HttpsProxyAgent', function() {
 			opts.port = 80;
 			opts.agent = agent;
 
-			http.get(opts);
+			http.get(opts).on('error', e => {
+				assert.equal(e.code, 'ECONNRESET');
+			});
 		});
 	});
 
@@ -382,6 +384,26 @@ describe('HttpsProxyAgent', function() {
 					assert.equal('localhost', data.host);
 					done();
 				});
+			});
+		});
+
+		it('should handle terminating socket in connect', function(done) {
+			server.on('connect', function(req, socket, head) {
+				socket.destroy();
+			});
+
+			var proxy = 'http://localhost:' + serverPort;
+			proxy = url.parse(proxy);
+			proxy.rejectUnauthorized = false;
+			var agent = new HttpsProxyAgent(proxy);
+			var opts = url.parse('https://localhost:' + sslServerPort);
+			opts.agent = agent;
+			opts.rejectUnauthorized = false;
+			https.get(opts, function() {
+				console.log('received response')
+			}).on('error', (e) => {
+				assert.equal(e.code, 'ECONNRESET');
+				done();
 			});
 		});
 	});

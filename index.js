@@ -105,6 +105,7 @@ HttpsProxyAgent.prototype.callback = function connect(req, opts, fn) {
 
 	function onend() {
 		debug('onend');
+		fn(null, socket);
 	}
 
 	function onerror(err) {
